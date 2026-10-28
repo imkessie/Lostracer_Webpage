@@ -62,7 +62,7 @@ class ItemController extends Controller
             'building' => 'required',
             'floor_detail' => 'nullable|max:100',
             'event_date' => 'required|date',
-            'photo' => 'nullable|image|max:2048',
+            'photo' => 'required|image|max:2048',
             'tags' => 'nullable|string',
         ]);
 
