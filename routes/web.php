@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\ClaimController;
+use App\Http\Controllers\MessageController;
 use Illuminate\Support\Facades\Route;
 
 // Rute untuk tamu (belum login)
@@ -25,5 +27,23 @@ Route::middleware('auth')->group(function () {
     Route::get('/items/create', [ItemController::class, 'create'])->name('items.create');
     Route::post('/items', [ItemController::class, 'store'])->name('items.store');
 
+
+    Route::resource('items', ItemController::class);
+
+
+    
     Route::get('/dashboard', [ItemController::class, 'index'])->name('dashboard');
+
+    Route::post('/items/{item}/claims', [ClaimController::class, 'store'])->name('claims.store');
+
+    Route::get('/messages/{item}', [MessageController::class, 'show'])->name('messages.show');
+    Route::post('/messages/{item}', [MessageController::class, 'store'])->name('messages.store');
+
+
+    // 1. Central Inbox List Page
+    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+
+    // 2. Specific Item Chat Conversation (already created)
+    Route::get('/messages/{item}', [MessageController::class, 'show'])->name('messages.show');
+    Route::post('/messages/{item}', [MessageController::class, 'store'])->name('messages.store');
 });

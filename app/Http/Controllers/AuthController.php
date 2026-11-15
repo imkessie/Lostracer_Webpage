@@ -48,7 +48,7 @@ class AuthController extends Controller
             'email' => [
                 'required',
                 'email',
-                'unique::users, email',
+                'unique:users,email',
                 function ($attribute, $value, $fail){
                     if (!str_ends_with($value, '@uph.edu') && !str_ends_with($value, '@student.uph.edu')){
                         $fail('Pendaftaran hanya dapat menggunakan email resmi kampus.');
@@ -58,7 +58,7 @@ class AuthController extends Controller
             'password' => 'required|min:6|confirmed',
         ]);
 
-        $user = User::created([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),

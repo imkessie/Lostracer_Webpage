@@ -51,7 +51,16 @@ class ItemController extends Controller
         return view('items.create', compact('categories'));
     }
 
-    // 3. Menyimpan Laporan Barang & Upload Foto
+    // 3. Loads all database relationships so tags, categories, and pelapor
+    public function show(Item $item)
+    {
+        // Load relations
+        $item->load(['user', 'category', 'tags']);
+
+        return view('items.show', compact('item'));
+    }
+
+    // 4. Menyimpan Laporan Barang & Upload Foto
     public function store(Request $request)
     {
         $request->validate([

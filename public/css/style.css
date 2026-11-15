@@ -1,0 +1,221 @@
+/* public/css/dashboard.css */
+
+.feed-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Search & Tabs Card */
+.feed-header-card {
+    margin-bottom: 5rem;
+    background: #ffffff;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.search-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.search-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+}
+
+.btn-search {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Tabs */
+.tab-container {
+    display: flex;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.tab-link {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    color: #6b7280;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-link.active-found {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+}
+
+.tab-link.active-lost {
+    color: #dc2626;
+    border-bottom-color: #dc2626;
+}
+
+/* Post Cards */
+.post-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5rem;
+}
+
+.post-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.post-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.user-name {
+    display: block;
+    font-size: 14px;
+    color: #111827;
+}
+
+.post-meta {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.badge-found {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.badge-lost {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* Card Content & Media */
+.post-image-container {
+    background: #f8fafc;
+    text-align: center;
+}
+
+.post-image {
+    max-width: 100%;
+    max-height: 350px;
+    object-fit: contain;
+}
+
+.post-card-body {
+    padding: 16px;
+}
+
+.post-title {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.post-description {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.5;
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.tag-link {
+    font-size: 12px;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Card Footer */
+.post-card-footer {
+    background: #f9fafb;
+    padding: 12px 16px;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.category-label {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.btn-details {
+    background: #2563eb;
+    color: white;
+    text-decoration: none;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+}
+
+.empty-state {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    color: #6b7280;
+}
+

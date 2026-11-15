@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
 
     <style>
         :root {
@@ -29,10 +30,13 @@
 
         nav {
             background-color: var(--primary-navy);
-            padding: 14px 28px;
+            padding: 1rem 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         nav .brand {
@@ -137,7 +141,8 @@
         <div class="menu">
             <a href="/dashboard">Dashboard</a>
             <a href="/items/create">+ Lapor Barang</a>
-            <form action="/logout" method="POST" style="display: inline;">
+            <a href="{{ route('messages.index') }}" class="nav-link">💬 Messages</a>
+            <form action="{{ route('logout') }}" method="POST" style="display: inline;">
                 @csrf
                 <button type="submit">Logout ({{ auth()->user()->name }})</button>
             </form>
