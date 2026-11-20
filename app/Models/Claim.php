@@ -8,6 +8,12 @@ class Claim extends Model
 {
     protected $guarded = [];
 
+    protected $casts = [
+        'decided_at' => 'datetime',
+        'handover_at' => 'datetime',
+        'attempt_no' => 'integer',
+    ];
+
     public function item()
     {
         return $this->belongsTo(Item::class);
@@ -21,5 +27,10 @@ class Claim extends Model
     public function verifier()
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function auditLogs()
+    {
+        return $this->hasMany(AuditLog::class);
     }
 }

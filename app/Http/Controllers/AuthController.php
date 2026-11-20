@@ -16,24 +16,39 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $kredensial = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
         ]);
 
-        if (Auth::attempt($kredensial)){
-            if (Auth::user()->is_blocked){
+        $credentials['email'] = strtolower(trim($credentials['email']));
+
+        // FR-01 & AC-04: Reject emails outside the allowed institutional domains
+        if (! $this->isAllowedCampusEmail($credentials['email'])) {
+            return back()
+                ->withErrors(['email' => 'Login is restricted to official UPH campus email domains.'])
+                ->onlyInput('email');
+        }
+
+        if (Auth::attempt($credentials)) {
+            if (Auth::user()->is_blocked) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
-                return back()->withErrors(['email' => 'Akun anda dinonaktifkan oleh petugas. Silahkan hubungi pos keamanan']);
+
+                return back()
+                    ->withErrors(['email' => 'Your account has been suspended by security. Please contact the security desk.'])
+                    ->onlyInput('email');
             }
 
-            $request->session()->regenerate(); //Preventing Session Fixation
-            return redirect()->intended('/dashboard');
+            $request->session()->regenerate(); // Prevent Session Fixation
+
+            return redirect()->intended(route('dashboard'));
         }
 
-        return back()->withErrors(['email' => 'Email atau Password salah.'])->onlyInput('email');
+        return back()
+            ->withErrors(['email' => 'Invalid email or password.'])
+            ->onlyInput('email');
     }
 
     public function showRegister()
@@ -43,31 +58,35 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $request->validate([
-            'name' => 'required|max:100',
+        $normalizedEmail = strtolower(trim((string) $request->input('email')));
+        $request->merge(['email' => $normalizedEmail]);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
             'email' => [
                 'required',
                 'email',
-                'unique::users, email',
-                function ($attribute, $value, $fail){
-                    if (!str_ends_with($value, '@uph.edu') && !str_ends_with($value, '@student.uph.edu')){
-                        $fail('Pendaftaran hanya dapat menggunakan email resmi kampus.');
+                'unique:users,email',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! $this->isAllowedCampusEmail((string) $value)) {
+                        $fail('Registration is only allowed with an official campus email (@student.uph.edu or @uph.edu).');
                     }
                 },
             ],
-            'password' => 'required|min:6|confirmed',
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
         ]);
 
-        $user = User::created([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
             'role' => 'user',
         ]);
 
         Auth::login($user);
         $request->session()->regenerate();
-        return redirect('/dashboard')->with('success', 'Welcome to Lostracer!');
+
+        return redirect()->route('dashboard')->with('success', 'Welcome to Lostracer UPH!');
     }
 
     public function logout(Request $request)
@@ -75,6 +94,22 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login')->with('success', 'You have been Logout');
+
+        return redirect()->route('login')->with('success', 'You have been signed out.');
+    }
+
+    /**
+     * Memeriksa apakah domain email terdaftar di config/lostracer.php (PRV-06).
+     */
+    private function isAllowedCampusEmail(string $email): bool
+    {
+        $atPos = strrpos($email, '@');
+        if ($atPos === false) {
+            return false;
+        }
+
+        $domain = strtolower(substr($email, $atPos + 1));
+
+        return in_array($domain, config('lostracer.allowed_email_domains', []), true);
     }
 }

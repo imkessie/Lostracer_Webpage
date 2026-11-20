@@ -10,6 +10,6 @@ class Tag extends Model
 
     public function items()
     {
-        return $this->belongsTo(Item::class, 'item_tag');
+        return $this->belongsToMany(Item::class, 'item_tag');
     }
 }
