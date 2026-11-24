@@ -76,6 +76,7 @@ class ItemController extends Controller
                     ->orWhere('description', 'like', '%'.$q.'%')
                     ->orWhere('building', 'like', '%'.$q.'%')
                     ->orWhere('custody_location', 'like', '%'.$q.'%')
+                    ->orWhere('custom_category', 'like', '%'.$q.'%')
                     ->orWhereHas('tags', function ($tagQuery) use ($cleanedTag) {
                         $tagQuery->where('name', 'like', '%'.$cleanedTag.'%');
                     });
@@ -89,7 +90,7 @@ class ItemController extends Controller
         $totalMine = Item::where('user_id', $user->id)->count();
         $totalArchive = $user->isSecurity() ? Item::whereIn('status', ['returned', 'expired'])->count() : 0;
 
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::orderedForDropdown();
         $buildings = config('lostracer.buildings');
         $popularTags = Tag::withCount('items')
             ->orderByDesc('items_count')
@@ -129,7 +130,7 @@ class ItemController extends Controller
      */
     public function create()
     {
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::orderedForDropdown();
         $buildings = config('lostracer.buildings');
         $depositLocations = Auth::user()->isSecurity()
             ? config('lostracer.custody_locations')
@@ -148,10 +149,11 @@ class ItemController extends Controller
         $allowedLocations = $user->isSecurity()
             ? config('lostracer.custody_locations')
             : config('lostracer.deposit_locations');
+        $isOthersCategory = $this->isOthersCategoryInput($request->input('category_id'));
 
         $validated = $request->validate([
             'type' => ['required', Rule::in($allowedTypes)],
-            'category_id' => ['required', 'exists:categories,id'],
+            ...$this->categoryValidationRules($isOthersCategory),
             'title' => ['required', 'string', 'max:150'],
             'description' => ['required', 'string'],
             'building' => ['required', Rule::in(config('lostracer.buildings'))],
@@ -180,6 +182,7 @@ class ItemController extends Controller
             'photo.required' => 'Found posts require an item photo.',
             'custody_location.required' => 'Custody location (security post / lobby) is required for found items.',
             'deposit_note.required' => 'Deposit note (officer name / shift) is required for found items.',
+            ...$this->categoryValidationMessages(),
         ]);
 
         $cleanedTags = $this->parseTags($validated['tags']);
@@ -200,11 +203,13 @@ class ItemController extends Controller
         $isFound = $validated['type'] === 'found';
         $shelfMoveMonths = (int) config('lostracer.retention.shelf_move_months', 3);
         $expirationMonths = (int) config('lostracer.retention.expiration_months', 6);
+        $categoryPayload = $this->resolveCategoryPayload($isOthersCategory, $validated);
 
-        $item = DB::transaction(function () use ($user, $validated, $photoPath, $isSensitive, $isFound, $shelfMoveMonths, $expirationMonths, $cleanedTags) {
+        $item = DB::transaction(function () use ($user, $validated, $categoryPayload, $photoPath, $isSensitive, $isFound, $shelfMoveMonths, $expirationMonths, $cleanedTags) {
             $item = Item::create([
                 'user_id' => $user->id,
-                'category_id' => $validated['category_id'],
+                'category_id' => $categoryPayload['category_id'],
+                'custom_category' => $categoryPayload['custom_category'],
                 'type' => $validated['type'],
                 'status' => 'open',
                 'title' => $validated['title'],
@@ -403,7 +408,7 @@ class ItemController extends Controller
     {
         $this->authorizeItemEdit($item);
 
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::orderedForDropdown();
         $buildings = config('lostracer.buildings');
         $tagsString = $item->tags->pluck('name')->implode(', ');
 
@@ -417,9 +422,10 @@ class ItemController extends Controller
     {
         $this->authorizeItemEdit($item);
         $user = Auth::user();
+        $isOthersCategory = $this->isOthersCategoryInput($request->input('category_id'));
 
         $validated = $request->validate([
-            'category_id' => ['required', 'exists:categories,id'],
+            ...$this->categoryValidationRules($isOthersCategory),
             'title' => ['required', 'string', 'max:150'],
             'description' => ['required', 'string'],
             'building' => ['required', Rule::in(config('lostracer.buildings'))],
@@ -429,7 +435,7 @@ class ItemController extends Controller
             'hidden_detail' => ['nullable', 'string', 'max:500'],
             'photo' => ['nullable', 'image', 'max:2048'],
             'tags' => ['required', 'string'],
-        ]);
+        ], $this->categoryValidationMessages());
 
         $cleanedTags = $this->parseTags($validated['tags']);
         if (count($cleanedTags) < 1 || count($cleanedTags) > 5) {
@@ -456,9 +462,12 @@ class ItemController extends Controller
             $photoPath = $this->movePhotoPrivacyDisk($photoPath, $oldSensitive, $newSensitive);
         }
 
-        DB::transaction(function () use ($item, $validated, $newSensitive, $photoPath, $cleanedTags, $user, $oldSensitive) {
+        $categoryPayload = $this->resolveCategoryPayload($isOthersCategory, $validated);
+
+        DB::transaction(function () use ($item, $validated, $categoryPayload, $newSensitive, $photoPath, $cleanedTags, $user, $oldSensitive) {
             $item->update([
-                'category_id' => $validated['category_id'],
+                'category_id' => $categoryPayload['category_id'],
+                'custom_category' => $categoryPayload['custom_category'],
                 'title' => $validated['title'],
                 'description' => $validated['description'],
                 'building' => $validated['building'],
@@ -753,5 +762,58 @@ class ItemController extends Controller
   <text x="320" y="240" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#64748B">Hanya petugas keamanan (security) yang dapat melihat foto asli.</text>
 </svg>
 SVG;
+    }
+
+    private function isOthersCategoryInput(mixed $rawCategory): bool
+    {
+        if (is_string($rawCategory) && strtolower(trim($rawCategory)) === 'others') {
+            return true;
+        }
+
+        if (is_numeric($rawCategory)) {
+            $category = Category::find((int) $rawCategory);
+
+            return $category !== null && $category->isOthers();
+        }
+
+        return false;
+    }
+
+    private function categoryValidationRules(bool $isOthersCategory): array
+    {
+        return [
+            'category_id' => $isOthersCategory ? ['required'] : ['required', 'exists:categories,id'],
+            'custom_category' => [
+                Rule::requiredIf($isOthersCategory),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+        ];
+    }
+
+    private function categoryValidationMessages(): array
+    {
+        return [
+            'custom_category.required' => 'Please specify the category name when selecting Others.',
+        ];
+    }
+
+    private function resolveCategoryPayload(bool $isOthersCategory, array $validated): array
+    {
+        if ($isOthersCategory) {
+            $othersCategory = Category::whereRaw('LOWER(name) = ?', ['others'])->first()
+                ?? Category::create(['name' => 'Others']);
+
+            return [
+                'category_id' => $othersCategory->id,
+                'custom_category' => trim((string) $validated['custom_category']),
+            ];
+        }
+
+        return [
+            'category_id' => (int) $validated['category_id'],
+            'custom_category' => null,
+        ];
     }
 }

@@ -157,7 +157,7 @@
             <div class="meta-grid" style="margin-bottom: 18px;">
                 <div>
                     <div class="meta-item-label">Category</div>
-                    <div class="meta-item-value">{{ $item->category->name }}</div>
+                    <div class="meta-item-value">{{ $item->displayCategory() }}</div>
                 </div>
                 <div>
                     <div class="meta-item-label">Event Date</div>

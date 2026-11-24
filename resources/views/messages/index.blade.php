@@ -109,7 +109,7 @@
                             <span class="caption">&bull; Re: <strong>{{ $activeItem->title }}</strong></span>
                         </div>
                         <div class="caption" style="margin-top: 2px;">
-                            {{ $activeItem->category->name }} &bull; {{ $activeItem->building }}
+                            {{ $activeItem->displayCategory() }} &bull; {{ $activeItem->building }}
                             @if($activeItem->custody_location)
                                 &bull; Custody: {{ $activeItem->custody_location }}
                             @endif

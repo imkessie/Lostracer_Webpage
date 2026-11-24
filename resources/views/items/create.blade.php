@@ -78,17 +78,12 @@
             <h2 class="section-title" style="margin-bottom: 16px;">2. Item Information &amp; Location</h2>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
-                <div class="form-group">
-                    <label for="category_id">Category</label>
-                    <select id="category_id" name="category_id" required>
-                        <option value="">-- Select Category --</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ (string) old('category_id') === (string) $category->id ? 'selected' : '' }}>
-                                {{ $category->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+                @include('items.partials.category-field', [
+                    'categories' => $categories,
+                    'includePlaceholder' => true,
+                    'selectedCategoryId' => '',
+                    'customCategory' => '',
+                ])
 
                 <div class="form-group">
                     <label for="event_date">Event Date</label>

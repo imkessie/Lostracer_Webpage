@@ -104,7 +104,7 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
-                <input type="text" name="q" value="{{ $q }}" data-shortcut-search data-live-search-input placeholder="Search items, #hashtags, or buildings (press /)" style="padding-right: 36px;">
+                <input type="text" name="q" value="{{ $q }}" data-shortcut-search data-live-search-input placeholder="Search items or #hashtags" style="padding-right: 36px;">
                 <button type="button" class="input-clear-btn" data-clear-input aria-label="Clear search" hidden>&times;</button>
             </div>
 
@@ -224,7 +224,7 @@
                         'description' => $item->description,
                         'type' => $item->type,
                         'status' => $item->status,
-                        'category' => $item->category->name,
+                        'category' => $item->displayCategory(),
                         'building' => $item->building,
                         'floor_detail' => $item->floor_detail,
                         'event_date' => $item->event_date->format('d M Y'),
@@ -266,7 +266,7 @@
                                     {{ $isFound ? 'Found' : 'Lost' }}
                                 </span>
 
-                                <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
+                                <div style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; align-items: center;">
                                     @if($item->is_hidden)
                                         <span class="glass-pill is-dark">Hidden</span>
                                     @elseif($item->is_sensitive)
@@ -291,7 +291,7 @@
                             </div>
 
                             @if($isFound && $item->custody_location)
-                                <div class="media-overlay-bottom">
+                                <div class="media-overlay-bottom" title="{{ $item->custody_location }}">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6EE7B7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
                                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                                     </svg>
@@ -331,7 +331,7 @@
 
                     {{-- Body --}}
                     <div class="post-body">
-                        <div class="post-category">{{ $item->category->name }}</div>
+                        <div class="post-category">{{ $item->displayCategory() }}</div>
                         <h3 class="post-title">
                             <a href="{{ route('items.show', $item) }}">{{ $item->title }}</a>
                         </h3>

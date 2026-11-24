@@ -50,6 +50,7 @@ class DatabaseSeeder extends Seeder
             'Personal Accessories',
             'Clothing & Apparel',
             'Books & Stationery',
+            'Others',
         ];
 
         $categoryMap = [];

@@ -26,6 +26,18 @@ class Item extends Model
         return $this->belongsTo(Category::class);
     }
 
+    /**
+     * Mengembalikan nama kategori yang ditampilkan (prioritaskan custom_category bila ada).
+     */
+    public function displayCategory(): string
+    {
+        if ($this->custom_category !== null && trim($this->custom_category) !== '') {
+            return trim($this->custom_category);
+        }
+
+        return $this->category?->name ?? 'Others';
+    }
+
     public function tags()
     {
         return $this->belongsToMany(Tag::class, 'item_tag');

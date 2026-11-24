@@ -26,16 +26,12 @@
             @method('PUT')
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
-                <div class="form-group">
-                    <label for="category_id">Category</label>
-                    <select id="category_id" name="category_id" required>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ (string) old('category_id', $item->category_id) === (string) $category->id ? 'selected' : '' }}>
-                                {{ $category->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+                @include('items.partials.category-field', [
+                    'categories' => $categories,
+                    'includePlaceholder' => false,
+                    'selectedCategoryId' => $item->category_id,
+                    'customCategory' => $item->custom_category,
+                ])
 
                 <div class="form-group">
                     <label for="event_date">Event Date</label>

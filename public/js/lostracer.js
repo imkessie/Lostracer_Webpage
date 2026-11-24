@@ -828,6 +828,30 @@
             ),
         ];
 
+        // Toggle conditional "Others" category text field (Create & Edit Post)
+        const categorySelect = document.getElementById('category_id');
+        const customCategoryGroup = document.getElementById('custom-category-group');
+        const customCategoryInput = document.getElementById('custom_category');
+        if (categorySelect && customCategoryGroup && customCategoryInput) {
+            const isOtherSelected = () => {
+                const selectedOpt = categorySelect.options[categorySelect.selectedIndex];
+                return Boolean(selectedOpt && selectedOpt.dataset.isOther === 'true');
+            };
+
+            const syncCustomCategoryUI = ({ focusInput = false } = {}) => {
+                const showCustom = isOtherSelected();
+                customCategoryGroup.hidden = !showCustom;
+                customCategoryInput.required = showCustom;
+                customCategoryInput.disabled = !showCustom;
+                if (showCustom && focusInput) {
+                    customCategoryInput.focus();
+                }
+            };
+
+            categorySelect.addEventListener('change', () => syncCustomCategoryUI({ focusInput: true }));
+            syncCustomCategoryUI({ focusInput: false });
+        }
+
         // Post Type Switcher (Create Post)
         const radios = document.querySelectorAll('.type-radio');
         if (radios.length > 0) {
@@ -940,8 +964,14 @@
 
             const computeProgress = () => {
                 const isFound = (createForm.querySelector('.type-radio:checked')?.value || 'found') === 'found';
+                const catSelectEl = createForm.querySelector('#category_id');
+                const customCatEl = createForm.querySelector('#custom_category');
+                const selectedCatOpt = catSelectEl?.options[catSelectEl.selectedIndex];
+                const isOtherCat = Boolean(selectedCatOpt && selectedCatOpt.dataset.isOther === 'true');
+                const hasValidCategory = Boolean(catSelectEl?.value) && (!isOtherCat || Boolean(customCatEl?.value.trim()));
+
                 const checks = [
-                    Boolean(createForm.querySelector('#category_id')?.value),
+                    hasValidCategory,
                     Boolean(createForm.querySelector('#event_date')?.value),
                     Boolean(createForm.querySelector('#title')?.value.trim()),
                     Boolean(createForm.querySelector('#description')?.value.trim()),
@@ -1997,8 +2027,16 @@
             if (lpImg) lpImg.classList.toggle('sensitive-blur', isSens);
 
             const catSelect = form.querySelector('#category_id');
+            const customCatInput = form.querySelector('#custom_category');
             if (lpCategory && catSelect) {
-                lpCategory.textContent = catSelect.value ? catSelect.options[catSelect.selectedIndex].text : 'Category';
+                const selectedOpt = catSelect.options[catSelect.selectedIndex];
+                const isOther = Boolean(selectedOpt && selectedOpt.dataset.isOther === 'true');
+                if (isOther) {
+                    const customText = customCatInput?.value.trim();
+                    lpCategory.textContent = customText || 'Others';
+                } else {
+                    lpCategory.textContent = catSelect.value ? selectedOpt.text : 'Category';
+                }
             }
 
             const titleVal = form.querySelector('#title')?.value.trim();

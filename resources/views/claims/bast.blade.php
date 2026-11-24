@@ -35,7 +35,7 @@
         <table class="data-table">
             <tr>
                 <th style="width: 34%;">Item Name</th>
-                <td><strong>{{ $claim->item->title }}</strong> ({{ $claim->item->category->name }})</td>
+                <td><strong>{{ $claim->item->title }}</strong> ({{ $claim->item->displayCategory() }})</td>
             </tr>
             <tr>
                 <th>Last Custody Location</th>

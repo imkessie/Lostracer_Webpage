@@ -402,4 +402,87 @@ class ItemAndPrivacyTest extends TestCase
             ->assertOk()
             ->assertSeeInOrder(['Alpha Older Event Discussed', 'Beta Newer Event Quiet']);
     }
+
+    public function test_others_category_requires_custom_text_and_supports_create_search_filter_and_edit(): void
+    {
+        $othersCategory = Category::whereRaw('LOWER(name) = ?', ['others'])->firstOrFail();
+
+        // Create & edit views expose the Others option and custom category field
+        $this->actingAs($this->student)
+            ->get(route('items.create'))
+            ->assertOk()
+            ->assertSee('Others')
+            ->assertSee('name="custom_category"', false);
+
+        // Selecting Others without filling custom_category fails validation
+        $this->actingAs($this->student)
+            ->post(route('items.store'), [
+                'type' => 'lost',
+                'category_id' => $othersCategory->id,
+                'title' => 'Payung Lipat',
+                'description' => 'Tertinggal di perpustakaan.',
+                'building' => 'Perpustakaan UPH',
+                'floor_detail' => 'Lantai 1',
+                'event_date' => now()->toDateString(),
+                'tags' => 'payung',
+            ])
+            ->assertSessionHasErrors('custom_category');
+
+        // Selecting Others with custom_category succeeds and displays custom text
+        $this->actingAs($this->student)
+            ->post(route('items.store'), [
+                'type' => 'lost',
+                'category_id' => $othersCategory->id,
+                'custom_category' => 'Umbrella & Rain Gear',
+                'title' => 'Payung Lipat Biru',
+                'description' => 'Tertinggal di rak payung.',
+                'building' => 'Perpustakaan UPH',
+                'floor_detail' => 'Lantai 1',
+                'event_date' => now()->toDateString(),
+                'tags' => 'payung',
+            ])
+            ->assertRedirect();
+
+        $item = Item::where('title', 'Payung Lipat Biru')->firstOrFail();
+        $this->assertSame($othersCategory->id, $item->category_id);
+        $this->assertSame('Umbrella & Rain Gear', $item->custom_category);
+
+        // Show page, dashboard filter by Others, and keyword search by custom_category all work
+        $this->actingAs($this->otherStudent)
+            ->get(route('items.show', $item))
+            ->assertOk()
+            ->assertSee('Umbrella &amp; Rain Gear', false);
+
+        $this->actingAs($this->otherStudent)
+            ->get('/dashboard?type=lost&category='.$othersCategory->id)
+            ->assertOk()
+            ->assertSee('Payung Lipat Biru')
+            ->assertSee('Umbrella &amp; Rain Gear', false);
+
+        $this->actingAs($this->otherStudent)
+            ->get('/dashboard?type=lost&q=Rain+Gear')
+            ->assertOk()
+            ->assertSee('Payung Lipat Biru');
+
+        // Edit page pre-populates custom_category; switching to standard category clears custom_category
+        $this->actingAs($this->student)
+            ->get(route('items.edit', $item))
+            ->assertOk()
+            ->assertSee('value="Umbrella &amp; Rain Gear"', false);
+
+        $this->actingAs($this->student)
+            ->put(route('items.update', $item), [
+                'category_id' => $this->category->id,
+                'title' => 'Payung Lipat Biru',
+                'description' => 'Tertinggal di rak payung.',
+                'building' => 'Perpustakaan UPH',
+                'floor_detail' => 'Lantai 1',
+                'event_date' => now()->toDateString(),
+                'tags' => 'payung',
+            ])
+            ->assertRedirect(route('items.show', $item));
+
+        $this->assertNull($item->fresh()->custom_category);
+        $this->assertSame($this->category->id, $item->fresh()->category_id);
+    }
 }
